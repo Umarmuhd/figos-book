@@ -1,10 +1,10 @@
 {
-  "name": "frappe-books",
+  "name": "figos-books",
   "version": "0.21.2",
   "description": "Simple book-keeping app for everyone",
   "author": {
-    "name": "Frappe Technologies Pvt. Ltd.",
-    "email": "hello@frappe.io"
+    "name": "Meuve Technologies Pvt. Ltd.",
+    "email": "hello@figos.io"
   },
   "scripts": {
     "dev": "node build/scripts/dev.mjs",
@@ -23,27 +23,26 @@
     "@codemirror/autocomplete": "^6.4.2",
     "@codemirror/lang-vue": "^0.1.1",
     "@popperjs/core": "^2.10.2",
+    "@tanstack/vue-query": "^5.51.24",
+    "axios": "^1.7.4",
     "better-sqlite3": "^9.2.2",
     "codemirror": "^6.0.1",
+    "cookie": "^0.6.0",
     "core-js": "^3.19.0",
     "electron-store": "^8.0.1",
     "feather-icons": "^4.28.0",
+    "js-cookie": "^3.0.5",
     "knex": "^2.4.0",
     "lodash": "^4.17.21",
     "luxon": "^2.5.2",
     "node-fetch": "2",
     "pesa": "^1.1.12",
+    "pinia": "^2.2.2",
     "source-map-support": "^0.5.21",
     "vue": "^3.3.4",
-    "vue-router": "^4.0.12",
-    "axios": "^1.7.4",
-    "cookie": "^0.6.0",
-    "js-cookie": "^3.0.5",
-    "pinia": "^2.2.2"
+    "vue-router": "^4.0.12"
   },
   "devDependencies": {
-    "@types/cookie": "^0.6.0",
-    "@types/js-cookie": "^3.0.6",
     "@codemirror/language": "^6.0.0",
     "@codemirror/state": "^6.0.0",
     "@codemirror/view": "^6.0.0",
@@ -51,7 +50,9 @@
     "@lezer/common": "^1.0.0",
     "@types/assert": "^1.5.6",
     "@types/better-sqlite3": "^7.6.4",
+    "@types/cookie": "^0.6.0",
     "@types/electron-devtools-installer": "^2.2.0",
+    "@types/js-cookie": "^3.0.6",
     "@types/lodash": "^4.14.179",
     "@types/luxon": "^2.3.1",
     "@types/node": "^17.0.23",
@@ -96,7 +97,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "homepage": "https://frappe.io/books",
+  "homepage": "https://figos.io/books",
   "repository": {
     "url": "https://github.com/frappe/books"
   },

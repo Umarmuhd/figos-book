@@ -1,19 +1,13 @@
 <template>
-  <div
-    class="flex-1 flex justify-center items-center bg-gray-25"
-    :class="{
-      'pointer-events-none': loadingDatabase,
-      'window-drag': platform !== 'Windows',
-    }"
-  >
-    <div
-      class="w-full w-form shadow-lg rounded-lg border relative bg-white"
-      style="height: 700px"
-    >
+  <div class="flex-1 flex justify-center items-center bg-gray-25" :class="{
+    'pointer-events-none': loadingDatabase,
+    'window-drag': platform !== 'Windows',
+  }">
+    <div class="w-full w-form shadow-lg rounded-lg border relative bg-white" style="height: 700px">
       <!-- Welcome to Figos Books -->
       <div class="px-4 py-4">
         <h1 class="text-2xl font-semibold select-none">
-          {{ t`Welcome to Frappe Books` }}
+          {{ t`Welcome to Figos Books` }}
         </h1>
         <p class="text-gray-600 text-base select-none">
           {{
@@ -25,12 +19,8 @@
       <hr />
 
       <!-- New File (Blue Icon) -->
-      <div
-        data-testid="create-new-file"
-        class="px-4 h-row-largest flex flex-row items-center gap-4 p-2"
-        :class="creatingDemo ? '' : 'hover:bg-gray-50 cursor-pointer'"
-        @click="newDatabase"
-      >
+      <div data-testid="create-new-file" class="px-4 h-row-largest flex flex-row items-center gap-4 p-2"
+        :class="creatingDemo ? '' : 'hover:bg-gray-50 cursor-pointer'" @click="newDatabase">
         <div class="w-8 h-8 rounded-full bg-blue-500 relative flex-center">
           <feather-icon name="plus" class="text-white w-5 h-5" />
         </div>
@@ -46,11 +36,8 @@
       </div>
 
       <!-- Existing File (Green Icon) -->
-      <div
-        class="px-4 h-row-largest flex flex-row items-center gap-4 p-2"
-        :class="creatingDemo ? '' : 'hover:bg-gray-50 cursor-pointer'"
-        @click="existingDatabase"
-      >
+      <div class="px-4 h-row-largest flex flex-row items-center gap-4 p-2"
+        :class="creatingDemo ? '' : 'hover:bg-gray-50 cursor-pointer'" @click="existingDatabase">
         <div class="w-8 h-8 rounded-full bg-green-500 relative flex-center">
           <feather-icon name="upload" class="w-4 h-4 text-white" />
         </div>
@@ -65,12 +52,8 @@
       </div>
 
       <!-- Create Demo (Pink Icon) -->
-      <div
-        v-if="!files?.length"
-        class="px-4 h-row-largest flex flex-row items-center gap-4 p-2"
-        :class="creatingDemo ? '' : 'hover:bg-gray-50 cursor-pointer'"
-        @click="createDemo"
-      >
+      <div v-if="!files?.length" class="px-4 h-row-largest flex flex-row items-center gap-4 p-2"
+        :class="creatingDemo ? '' : 'hover:bg-gray-50 cursor-pointer'" @click="createDemo">
         <div class="w-8 h-8 rounded-full bg-pink-500 relative flex-center">
           <feather-icon name="monitor" class="w-4 h-4 text-white" />
         </div>
@@ -85,19 +68,59 @@
       </div>
       <hr />
 
-      <!-- File List -->
+      <!-- Remote List -->
       <div class="overflow-y-auto" style="max-height: 340px">
-        <div
-          v-for="(file, i) in files"
-          :key="file.dbPath"
+        <div v-if="isLoading">Loading...</div>
+        <div v-else-if="isError">An error has occurred: {{ error }}</div>
+        <div v-for="(business, i) in      businesses    " :key="business.id" class="">
+          <div class="h-row-largest px-4 flex gap-4 items-center"
+            :class="creatingDemo ? '' : 'hover:bg-gray-50 cursor-pointer'" :title="t`${business.name}`" @click="">
+            <div
+              class="w-8 h-8 rounded-full flex justify-center items-center bg-gray-200 text-gray-500 font-semibold flex-shrink-0 text-base">
+              {{ i + 1 }}
+            </div>
+            <div class="w-full">
+              <div class="flex justify-between overflow-x-auto items-baseline">
+                <h2 class="font-medium">
+                  {{ business.name }}
+                </h2>
+                <p class="whitespace-nowrap text-sm text-gray-600">
+                  <!-- {{ formatDate(file.modified) }} -->
+                </p>
+              </div>
+              <p class="text-sm text-gray-600 overflow-x-auto no-scrollbar whitespace-nowrap">
+                Remote
+              </p>
+            </div>
+            <button class="ms-auto p-2 hover:bg-gray-200 rounded-full w-8 h-8 text-gray-600 hover:text-gray-400"
+              @click.stop="() =>
+                downloadDbLocally({
+                  companyName: business.name,
+                  currency: business.currency,
+                  fiscalYearStart: new Date(business.fiscalYearStart)!.toISOString(),
+                  fiscalYearEnd: new Date(business.fiscalYearEnd).toISOString(),
+                  bankName: 'Max Finance',
+                  chartOfAccounts: 'India - Chart of Accounts',
+                  country: 'India',
+                  email: 'lin@lthings.com',
+                  fullname: 'Lin Slovenly',
+                  logo: ''
+                })
+                ">
+              <feather-icon name="download" class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+      <hr v-if="businesses?.length" />
+
+      <div class="overflow-y-auto" style="max-height: 340px">
+        <div v-for="(    file, i    ) in     files    " :key="file.dbPath"
           class="h-row-largest px-4 flex gap-4 items-center"
           :class="creatingDemo ? '' : 'hover:bg-gray-50 cursor-pointer'"
-          :title="t`${file.companyName} stored at ${file.dbPath}`"
-          @click="selectFile(file)"
-        >
+          :title="t`${file.companyName} stored at ${file.dbPath}`" @click="selectFile(file)">
           <div
-            class="w-8 h-8 rounded-full flex justify-center items-center bg-gray-200 text-gray-500 font-semibold flex-shrink-0 text-base"
-          >
+            class="w-8 h-8 rounded-full flex justify-center items-center bg-gray-200 text-gray-500 font-semibold flex-shrink-0 text-base">
             {{ i + 1 }}
           </div>
           <div class="w-full">
@@ -109,16 +132,12 @@
                 {{ formatDate(file.modified) }}
               </p>
             </div>
-            <p
-              class="text-sm text-gray-600 overflow-x-auto no-scrollbar whitespace-nowrap"
-            >
+            <p class="text-sm text-gray-600 overflow-x-auto no-scrollbar whitespace-nowrap">
               {{ truncate(file.dbPath) }}
             </p>
           </div>
-          <button
-            class="ms-auto p-2 hover:bg-red-200 rounded-full w-8 h-8 text-gray-600 hover:text-red-400"
-            @click.stop="() => deleteDb(i)"
-          >
+          <button class="ms-auto p-2 hover:bg-red-200 rounded-full w-8 h-8 text-gray-600 hover:text-red-400"
+            @click.stop="() => deleteDb(i)">
             <feather-icon name="x" class="w-4 h-4" />
           </button>
         </div>
@@ -126,29 +145,18 @@
       <hr v-if="files?.length" />
 
       <!-- Language Selector -->
-      <div
-        class="w-full flex justify-between items-center absolute p-4 text-gray-900"
-        style="top: 100%; transform: translateY(-100%)"
-      >
+      <div class="w-full flex justify-between items-center absolute p-4 text-gray-900"
+        style="top: 100%; transform: translateY(-100%)">
         <LanguageSelector v-show="!creatingDemo" class="text-sm w-28" />
-        <button
-          v-if="files?.length"
+        <button v-if="files?.length"
           class="text-sm bg-gray-100 hover:bg-gray-200 rounded px-4 py-1.5 w-28 h-8 no-scrollbar overflow-x-auto whitespace-nowrap"
-          :disabled="creatingDemo"
-          @click="createDemo"
-        >
+          :disabled="creatingDemo" @click="createDemo">
           {{ creatingDemo ? t`Please Wait` : t`Create Demo` }}
         </button>
       </div>
     </div>
-    <Loading
-      v-if="creatingDemo"
-      :open="creatingDemo"
-      :show-x="false"
-      :full-width="true"
-      :percent="creationPercent"
-      :message="creationMessage"
-    />
+    <Loading v-if="creatingDemo" :open="creatingDemo" :show-x="false" :full-width="true" :percent="creationPercent"
+      :message="creationMessage" />
 
     <!-- Base Count Selection when Dev -->
     <Modal :open-modal="openModal" @closemodal="openModal = false">
@@ -160,25 +168,16 @@
         </p>
         <div class="flex my-12 justify-center items-baseline gap-4 text-base">
           <label for="basecount" class="text-gray-600">Base Count</label>
-          <input
-            v-model="baseCount"
-            type="number"
-            name="basecount"
-            class="bg-gray-100 focus:bg-gray-200 rounded-md px-2 py-1 outline-none"
-          />
+          <input v-model="baseCount" type="number" name="basecount"
+            class="bg-gray-100 focus:bg-gray-200 rounded-md px-2 py-1 outline-none" />
         </div>
         <div class="flex justify-between">
           <Button @click="openModal = false">Cancel</Button>
-          <Button
-            type="primary"
-            @click="
-              () => {
-                openModal = false;
-                startDummyInstanceSetup();
-              }
-            "
-            >Create</Button
-          >
+          <Button type="primary" @click="() => {
+            openModal = false;
+            startDummyInstanceSetup();
+          }
+            ">Create</Button>
         </div>
       </div>
     </Modal>
@@ -200,6 +199,17 @@ import { updateConfigFiles } from 'src/utils/misc';
 import { deleteDb, getSavePath, getSelectedFilePath } from 'src/utils/ui';
 import type { ConfigFilesWithModified } from 'utils/types';
 import { defineComponent } from 'vue';
+import { useBusinesses } from "src/data/business";
+import { SetupWizardOptions } from '../setup/types';
+import setupInstance from 'src/setup/setupInstance';
+import { setLanguageMap } from 'src/utils/language';
+import { ModelNameEnum } from 'models/types';
+import { useMe } from 'src/data/user';
+
+
+interface BusinessFile extends ConfigFilesWithModified {
+  name: string;
+}
 
 export default defineComponent({
   name: 'DatabaseSelector',
@@ -210,7 +220,7 @@ export default defineComponent({
     Modal,
     Button,
   },
-  emits: ['file-selected', 'new-database'],
+  emits: ['file-selected', 'new-database', 'setup-complete'],
   data() {
     return {
       openModal: false,
@@ -231,6 +241,11 @@ export default defineComponent({
     };
   },
   async mounted() {
+    const { me, isLoading } = useMe()
+
+    console.log({ me, isLoading });
+
+
     await this.setFiles();
 
     if (fyo.store.isDevelopment) {
@@ -310,6 +325,8 @@ export default defineComponent({
     },
     async setFiles() {
       const dbList = await ipc.getDbList();
+      console.log({ dbList });
+
       this.files = dbList?.sort(
         (a, b) => Date.parse(b.modified) - Date.parse(a.modified)
       );
@@ -343,6 +360,25 @@ export default defineComponent({
 
       this.$emit('file-selected', filePath);
     },
+
+    async downloadDbLocally(input: SetupWizardOptions) {
+
+      const companyName = input.companyName;
+      const filePath = await ipc.getDbDefaultPath(companyName);
+      console.log('filePath', filePath);
+
+      this.fyo.telemetry.log(Verb.Completed, ModelNameEnum.SetupWizard);
+      this.$emit('setup-complete', input);
+
+    }
+
   },
+  setup() {
+    const { businesses, isLoading, error, isError } = useBusinesses()
+    console.log({ businesses, isLoading, error });
+    return {
+      businesses, isLoading, error, isError
+    };
+  }
 });
 </script>

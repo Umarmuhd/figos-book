@@ -21,7 +21,7 @@ const appSourcePath = path.join(root, 'dist_electron', 'build', 'main.js');
 
   test('navigate to database selector', async (t) => {
     /**
-     * When running on local, Frappe Books will open
+     * When running on local, Figos Books will open
      * the last selected database.
      */
     const changeDb = window.getByTestId('change-db');

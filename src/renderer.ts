@@ -12,6 +12,7 @@ import router from './router';
 import { stringifyCircular } from './utils';
 import { setLanguageMap } from './utils/language';
 import { createPinia } from 'pinia';
+import { VueQueryPlugin } from '@tanstack/vue-query';
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
@@ -36,9 +37,11 @@ import { createPinia } from 'pinia';
   });
   const pinia = createPinia();
   app.config.unwrapInjectedRef = true;
+
   setErrorHandlers(app);
 
   app.use(router);
+  app.use(VueQueryPlugin);
   app.use(pinia);
   app.component('App', App);
   app.component('FeatherIcon', FeatherIcon);

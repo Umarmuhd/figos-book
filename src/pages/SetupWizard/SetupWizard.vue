@@ -1,59 +1,31 @@
 <template>
-  <FormContainer
-    :show-header="false"
-    class="justify-content items-center h-full"
-    :class="{ 'window-drag': platform !== 'Windows' }"
-  >
+  <FormContainer :show-header="false" class="justify-content items-center h-full"
+    :class="{ 'window-drag': platform !== 'Windows' }">
     <template #body>
-      <FormHeader
-        :form-title="t`Set up your organization`"
-        class="sticky top-0 bg-white border-b"
-      >
+      <FormHeader :form-title="t`Set up your organization`" class="sticky top-0 bg-white border-b">
       </FormHeader>
 
       <!-- Section Container -->
       <div v-if="hasDoc" class="overflow-auto custom-scroll">
-        <CommonFormSection
-          v-for="([name, fields], idx) in activeGroup.entries()"
-          :key="name + idx"
-          ref="section"
-          class="p-4"
-          :class="idx !== 0 && activeGroup.size > 1 ? 'border-t' : ''"
-          :show-title="activeGroup.size > 1 && name !== t`Default`"
-          :title="name"
-          :fields="fields"
-          :doc="doc"
-          :errors="errors"
-          :collapsible="false"
-          @value-change="onValueChange"
-        />
+        <CommonFormSection v-for="([name, fields], idx) in activeGroup.entries()" :key="name + idx" ref="section"
+          class="p-4" :class="idx !== 0 && activeGroup.size > 1 ? 'border-t' : ''"
+          :show-title="activeGroup.size > 1 && name !== t`Default`" :title="name" :fields="fields" :doc="doc"
+          :errors="errors" :collapsible="false" @value-change="onValueChange" />
       </div>
 
       <!-- Buttons Bar -->
-      <div
-        class="mt-auto p-4 flex items-center justify-between border-t flex-shrink-0 sticky bottom-0 bg-white"
-      >
+      <div class="mt-auto p-4 flex items-center justify-between border-t flex-shrink-0 sticky bottom-0 bg-white">
         <p v-if="loading" class="text-base text-gray-600">
           {{ t`Loading instance...` }}
         </p>
         <Button v-if="!loading" class="w-24" @click="cancel">{{
           t`Cancel`
         }}</Button>
-        <Button
-          v-if="fyo.store.isDevelopment && !loading"
-          class="w-24 ml-auto mr-4"
-          :disabled="loading"
-          @click="fill"
-          >{{ t`Fill` }}</Button
-        >
-        <Button
-          type="primary"
-          class="w-24"
-          data-testid="submit-button"
-          :disabled="!areAllValuesFilled || loading"
-          @click="submit"
-          >{{ t`Submit` }}</Button
-        >
+        <Button v-if="fyo.store.isDevelopment && !loading" class="w-24 ml-auto mr-4" :disabled="loading" @click="fill">{{
+          t`Fill` }}</Button>
+        <Button type="primary" class="w-24" data-testid="submit-button"
+          :disabled="!areAllValuesFilled || loading || isLoading" @click="submit">{{ isLoading ? "Loading..." : t`Submit`
+          }}</Button>
       </div>
     </template>
   </FormContainer>
@@ -74,6 +46,8 @@ import { getSetupWizardDoc } from 'src/utils/misc';
 import { getFieldsGroupedByTabAndSection } from 'src/utils/ui';
 import { computed, defineComponent } from 'vue';
 import CommonFormSection from '../CommonForm/CommonFormSection.vue';
+import { useCreateBusinessMutation } from 'src/data/business';
+import { useMe } from 'src/data/user';
 
 export default defineComponent({
   name: 'SetupWizard',
@@ -136,6 +110,7 @@ export default defineComponent({
     },
   },
   async mounted() {
+    const { me, isLoading } = useMe()
     const languageMap = TranslationString.prototype.languageMap;
     this.docOrNull = getSetupWizardDoc(languageMap);
     if (!this.fyo.db.isConnected) {
@@ -146,6 +121,13 @@ export default defineComponent({
       // @ts-ignore
       window.sw = this;
     }
+
+    const user = me.value;
+
+    await this.doc.set('email', user?.email);
+    await this.doc.set('fullname', user?.name);
+
+
     this.fyo.telemetry.log(Verb.Started, ModelNameEnum.SetupWizard);
   },
   methods: {
@@ -191,14 +173,50 @@ export default defineComponent({
         });
       }
 
+      const data = this.doc.getValidDict();
+
+      console.log(data);
+
+
+      const payload = {
+        currency: data.currency as string,
+        name: data.companyName as string,
+        country: data.country as string,
+        chartOfAccounts: data.chartOfAccounts as string,
+        industry: "General",
+        fiscalYearStart: (data.fiscalYearStart as Date).toISOString(),
+        fiscalYearEnd: (data.fiscalYearEnd as Date).toISOString(),
+      };
+
+      // this.isLoading
+
       this.loading = true;
-      this.fyo.telemetry.log(Verb.Completed, ModelNameEnum.SetupWizard);
-      this.$emit('setup-complete', this.doc.getValidDict());
+      await this.createBusiness(payload, {
+        onSuccess: (data) => {
+          this.fyo.telemetry.log(Verb.Completed, ModelNameEnum.SetupWizard);
+          this.$emit('setup-complete', { ...this.doc.getValidDict(), ...payload, ...data });
+        },
+        onError: (error) => {
+          console.error(error);
+          this.loading = false;
+        },
+        onSettled: () => {
+          this.loading = false;
+        },
+      });
     },
     cancel() {
       this.fyo.telemetry.log(Verb.Cancelled, ModelNameEnum.SetupWizard);
       this.$emit('setup-canceled');
     },
   },
+  setup() {
+    const { mutateAsync, isPending } = useCreateBusinessMutation()
+    return {
+      createBusiness: mutateAsync,
+      isLoading: isPending,
+    };
+
+  }
 });
 </script>
