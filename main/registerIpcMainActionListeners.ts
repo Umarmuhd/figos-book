@@ -5,6 +5,7 @@ import {
   app,
   dialog,
   ipcMain,
+  session,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { constants } from 'fs';
@@ -179,7 +180,10 @@ export default function registerIpcMainActionListeners(main: Main) {
   );
 
   ipcMain.handle(IPC_ACTIONS.GET_CREDS, () => {
-    return getUrlAndTokenString();
+    const result = getUrlAndTokenString();
+    console.log(result);
+
+    return result;
   });
 
   ipcMain.handle(IPC_ACTIONS.DELETE_FILE, async (_, filePath: string) => {
@@ -207,6 +211,35 @@ export default function registerIpcMainActionListeners(main: Main) {
 
   ipcMain.handle(IPC_ACTIONS.GET_TEMPLATES, async () => {
     return getTemplates();
+  });
+
+  /**
+   * Cookie Related Actions
+   */
+  ipcMain.handle(IPC_ACTIONS.GET_COOKIE, async (_, key: string) => {
+    return await getErrorHandledReponse(async () => {
+      return await session.defaultSession.cookies.get({
+        name: key,
+      });
+    });
+  });
+
+  ipcMain.handle(
+    IPC_ACTIONS.SET_COOKIE,
+    async (_, cookie: Omit<Electron.CookiesSetDetails, 'url'>) => {
+      return await getErrorHandledReponse(async () => {
+        return await session.defaultSession.cookies.set({
+          url: main.winURL,
+          ...cookie,
+        });
+      });
+    }
+  );
+
+  ipcMain.handle(IPC_ACTIONS.REMOVE_COOKIE, async (_, key: string) => {
+    return await getErrorHandledReponse(async () => {
+      return await session.defaultSession.cookies.remove(main.winURL, key);
+    });
   });
 
   /**

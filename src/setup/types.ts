@@ -1,4 +1,5 @@
 export interface SetupWizardOptions {
+  id?: string;
   logo: string | null;
   companyName: string;
   country: string;

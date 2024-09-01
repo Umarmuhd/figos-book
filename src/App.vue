@@ -108,12 +108,14 @@ export default defineComponent({
     },
   },
   async mounted() {
-    this.auth.init();
+    await this.auth.init();
     await this.setInitialScreen();
   },
   methods: {
     async setInitialScreen(): Promise<void> {
       const { isAuthenticated } = this.auth;
+
+      console.log(fyo);
 
       const lastSelectedFilePath = fyo.config.get('lastSelectedFilePath', null);
 
@@ -156,6 +158,8 @@ export default defineComponent({
       this.activeScreen = Screen.SetupWizard;
     },
     async fileSelected(filePath: string): Promise<void> {
+      console.log('fileSelected', filePath);
+
       fyo.config.set('lastSelectedFilePath', filePath);
       if (filePath !== ':memory:' && !(await ipc.checkDbAccess(filePath))) {
         await showDialog({
@@ -234,7 +238,8 @@ export default defineComponent({
       await routeTo(route);
     },
     async showDbSelector(): Promise<void> {
-      localStorage.clear();
+      // localStorage.clear();
+      localStorage.removeItem('lastRoute');
       fyo.config.set('lastSelectedFilePath', null);
       fyo.telemetry.stop();
       await fyo.purgeCache();

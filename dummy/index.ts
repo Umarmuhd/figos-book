@@ -19,6 +19,7 @@ import {
 import items from './items.json';
 import logo from './logo';
 import parties from './parties.json';
+import { Business } from 'src/types/business';
 
 type Notifier = (stage: string, percent: number) => void;
 
@@ -64,23 +65,23 @@ export async function setupDummyInstance(
   return { companyName: options.companyName, instanceId };
 }
 
-async function setOtherSettings(fyo: Fyo) {
+export async function setOtherSettings(fyo: Fyo) {
   const doc = await fyo.doc.getDoc(ModelNameEnum.PrintSettings);
   const address = fyo.doc.getNewDoc(ModelNameEnum.Address);
   await address.setAndSync({
-    addressLine1: '1st Column, Fitzgerald Bridge',
-    city: 'Pune',
-    state: 'Maharashtra',
-    pos: 'Maharashtra',
-    postalCode: '411001',
-    country: 'India',
+    addressLine1: '25th Ademola Adetokunbo Street',
+    city: 'Lagos',
+    state: 'Lagos',
+    pos: 'Lagos',
+    postalCode: '100001',
+    country: 'Nigeria',
   });
 
   await doc.setAndSync({
     color: '#F687B3',
     template: 'Business',
     displayLogo: true,
-    phone: '+91 8983-000418',
+    phone: '+234 80000000',
     logo,
     address: address.name,
   });
@@ -95,7 +96,7 @@ async function setOtherSettings(fyo: Fyo) {
  *  warning: long functions ahead!
  */
 
-async function generateDynamicEntries(
+export async function generateDynamicEntries(
   fyo: Fyo,
   years: number,
   baseCount: number,
@@ -502,7 +503,7 @@ async function getNonSalesPurchaseInvoices(
   return invoices;
 }
 
-async function generateStaticEntries(fyo: Fyo) {
+export async function generateStaticEntries(fyo: Fyo) {
   await generateItems(fyo);
   await generateParties(fyo);
 }

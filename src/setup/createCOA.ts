@@ -19,8 +19,8 @@ export class CreateCOA {
     this.fyo = fyo;
   }
 
-  async run() {
-    const chart = await getCOA(this.chartOfAccounts);
+  async run(charts?: COATree) {
+    const chart = charts ? charts : await getCOA(this.chartOfAccounts);
     await this.createCOAAccounts(chart, null, '', true);
   }
 

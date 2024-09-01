@@ -3,7 +3,7 @@ import { ConfigValue } from 'src/config';
 import { getAuthToken, removeAuthToken } from '../token.utils';
 
 // TODO: Due to windows timeout was set to 15000
-const Axios = axios.create({
+export const Axios = axios.create({
   baseURL: ConfigValue.API_URL,
   timeout: 150000000,
   headers: {
@@ -13,14 +13,17 @@ const Axios = axios.create({
 
 // Change request data/error here
 Axios.interceptors.request.use(
-  (config) => {
-    const token = getAuthToken();
-
+  async (config) => {
+    const tokens = await getAuthToken();
+    // //@ts-ignore
     // config.headers = {
     //   ...config.headers,
     //   Authorization: `Bearer ${token ? token : ''}`,
     // };
-    config.headers['Authorization'] = `Bearer ${token ? token : ''}`;
+    console.log('tokens', tokens);
+    config.headers['Authorization'] = `Bearer ${
+      tokens.access_token ? tokens.access_token : ''
+    }`;
     return config;
   },
   (error) => {
@@ -30,14 +33,19 @@ Axios.interceptors.request.use(
 
 Axios.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (
-      (error.response && error.response.status === 401) ||
       (error.response && error.response.status === 403) ||
       (error.response && error.response.data.message === 'ERROR.NOT_AUTHORIZED')
     ) {
       removeAuthToken();
       //   Router.reload();
+    }
+    if (error.response && error.response.status === 401) {
+      const tokens = getAuthToken();
+      await refreshToken(tokens.refresh_token ?? '').catch(() =>
+        removeAuthToken()
+      );
     }
     return Promise.reject(error);
   }
@@ -63,4 +71,18 @@ export class HttpClient {
     const response = await Axios.delete<T>(url);
     return response.data;
   }
+}
+
+async function refreshToken(refreshToken: string) {
+  const res = await fetch(ConfigValue.API_URL + '/auth/refresh', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      refresh: refreshToken,
+    }),
+  });
+  const data = await res.json();
+  console.log({ data });
+
+  return data.accessToken;
 }

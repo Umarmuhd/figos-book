@@ -26,6 +26,10 @@ export enum IPC_ACTIONS {
   GET_TEMPLATES = 'get-templates',
   DELETE_FILE = 'delete-file',
   GET_DB_DEFAULT_PATH = 'get-db-default-path',
+  // Cookie actions
+  GET_COOKIE = 'get-cookie',
+  SET_COOKIE = 'set-cookie',
+  REMOVE_COOKIE = 'remove-cookie',
   // Database messages
   DB_CREATE = 'db-create',
   DB_CONNECT = 'db-connect',

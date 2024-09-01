@@ -33,9 +33,8 @@
 </template>
 
 <script setup lang="ts">
-import axios from 'axios';
 import Button from 'src/components/Button.vue';
-import { computed, reactive, ref } from 'vue';
+import { reactive, } from 'vue';
 import { useMutation } from '@tanstack/vue-query';
 import { useAuth } from '../../stores/auth.store';
 import client from '../../data/client/index';
@@ -47,20 +46,17 @@ const { authorize } = useAuth();
 const { mutate: login, isPending: loading } = useMutation({
   mutationFn: client.users.login,
   onSuccess: async (data) => {
-    console.log('Login success: ', data);
-    authorize(data.tokens.accessToken);
-    // setAuthCredentials(data.token, data.permissions);
+    authorize(data.tokens.accessToken, data.tokens.refreshToken);
     emit('login-success')
   },
 },);
 
 const credentials = reactive({
-  email: 'umarfarouqft@gmail.com',
-  password: 'Umar123#',
+  email: '',
+  password: '',
 });
 
 const onSubmit = async () => {
-  console.log('Login attempt: ', credentials);
   login({ email: credentials.email, password: credentials.password });
 };
 </script>

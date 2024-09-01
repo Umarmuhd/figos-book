@@ -94,18 +94,7 @@
             </div>
             <button class="ms-auto p-2 hover:bg-gray-200 rounded-full w-8 h-8 text-gray-600 hover:text-gray-400"
               @click.stop="() =>
-                downloadDbLocally({
-                  companyName: business.name,
-                  currency: business.currency,
-                  fiscalYearStart: new Date(business.fiscalYearStart)!.toISOString(),
-                  fiscalYearEnd: new Date(business.fiscalYearEnd).toISOString(),
-                  bankName: 'Max Finance',
-                  chartOfAccounts: 'India - Chart of Accounts',
-                  country: 'India',
-                  email: 'lin@lthings.com',
-                  fullname: 'Lin Slovenly',
-                  logo: ''
-                })
+                downloadDbLocally(business)
                 ">
               <feather-icon name="download" class="w-4 h-4" />
             </button>
@@ -205,12 +194,25 @@ import setupInstance from 'src/setup/setupInstance';
 import { setLanguageMap } from 'src/utils/language';
 import { ModelNameEnum } from 'models/types';
 import { useMe } from 'src/data/user';
+import { setupLocalInstance } from 'remote/index';
 
 
-interface BusinessFile extends ConfigFilesWithModified {
+interface BusinessDetails {
+  id: string;
   name: string;
+  currency: string;
+  country: string;
+  chartOfAccounts: string;
+  industry: string;
+  contactEmail: string;
+  contactPhone: string;
+  contactName: string;
+  fiscalYearStart: string;
+  fiscalYearEnd: string;
+  createdAt: string;
+  updatedAt: string;
+  accounts: object[];
 }
-
 export default defineComponent({
   name: 'DatabaseSelector',
   components: {
@@ -361,14 +363,38 @@ export default defineComponent({
       this.$emit('file-selected', filePath);
     },
 
-    async downloadDbLocally(input: SetupWizardOptions) {
+    async downloadDbLocally(input: BusinessDetails) {
 
-      const companyName = input.companyName;
+      const companyName = input.name;
       const filePath = await ipc.getDbDefaultPath(companyName);
       console.log('filePath', filePath);
 
-      this.fyo.telemetry.log(Verb.Completed, ModelNameEnum.SetupWizard);
-      this.$emit('setup-complete', input);
+      // this.fyo.telemetry.log(Verb.Completed, ModelNameEnum.SetupWizard);
+      // this.$emit('setup-complete', input);
+
+      // this.creatingDemo = true;
+      await setupLocalInstance(
+        filePath,
+        {
+          ...input
+        },
+        fyo,
+        1,
+        this.baseCount,
+        (message, percent) => {
+          this.creationMessage = message;
+          this.creationPercent = percent;
+        }
+      );
+
+      updateConfigFiles(fyo);
+      await fyo.purgeCache();
+      await this.setFiles();
+      this.fyo.telemetry.log(Verb.Created, 'dummy-instance');
+      this.creatingDemo = false;
+      this.$emit('file-selected', filePath);
+
+
 
     }
 

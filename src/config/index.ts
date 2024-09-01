@@ -1,6 +1,6 @@
 export const ConfigValue = {
-  AUTH_TOKEN_KEY: 'figos-auth-token',
+  AUTH_TOKEN_KEY: 'figos-auth',
   API_URL:
-    'https://figos-core-production.up.railway.app/api' ||
+    // 'https://api.figos.tech/api' ||
     'http://localhost:4000/api',
 };

@@ -83,6 +83,8 @@ async function buildRendererProcessSource() {
         reports: path.join(root, 'reports'),
         dummy: path.join(root, 'dummy'),
         fixtures: path.join(root, 'fixtures'),
+        //
+        remote: path.join(root, 'remote'),
       },
     },
   });

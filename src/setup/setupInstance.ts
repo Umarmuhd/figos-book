@@ -10,6 +10,7 @@ import {
 import {
   AccountRootTypeEnum,
   AccountTypeEnum,
+  COATree,
 } from 'models/baseModels/Account/types';
 import { AccountingSettings } from 'models/baseModels/AccountingSettings/AccountingSettings';
 import { numberSeriesDefaultsMap } from 'models/baseModels/Defaults/Defaults';
@@ -27,6 +28,11 @@ import { getCountryCodeFromCountry, getCountryInfo } from 'utils/misc';
 import { CountryInfo } from 'utils/types';
 import { CreateCOA } from './createCOA';
 import { SetupWizardOptions } from './types';
+import axios from 'axios';
+import { getAuthToken } from 'src/data/token.utils';
+import { ConfigValue } from 'src/config';
+import { Account } from 'src/types/business';
+import client from 'src/data/client';
 
 export default async function setupInstance(
   dbPath: string,
@@ -43,7 +49,7 @@ export default async function setupInstance(
   await updatePrintSettings(setupWizardOptions, fyo);
 
   await createCurrencyRecords(fyo);
-  await createAccountRecords(bankName, country, chartOfAccounts, fyo);
+  await createAccountRecords({ bankName, country, chartOfAccounts, fyo });
   await createRegionalRecords(country, fyo);
   await createDefaultEntries(fyo);
   await createDefaultNumberSeries(fyo);
@@ -61,6 +67,120 @@ export default async function setupInstance(
 
   fyo.store.skipTelemetryLogging = false;
 }
+
+export async function setupInstanceExisting(
+  dbPath: string,
+  setupWizardOptions: SetupWizardOptions,
+  fyo: Fyo
+) {
+  const { companyName, country, bankName, chartOfAccounts } =
+    setupWizardOptions;
+
+  const accounts = await client.business.accounts(setupWizardOptions.id!);
+
+  fyo.store.skipTelemetryLogging = true;
+  await initializeDatabase(dbPath, country, fyo);
+  console.log('half way...');
+  await updateSystemSettings(setupWizardOptions, fyo);
+  await updateAccountingSettings(setupWizardOptions, fyo);
+  await updatePrintSettings(setupWizardOptions, fyo);
+
+  await createCurrencyRecords(fyo);
+  await createAccountRecords({
+    bankName,
+    country,
+    chartOfAccounts,
+    fyo,
+    charts: convertAccountsToChart(accounts),
+  });
+  await createRegionalRecords(country, fyo);
+  await createDefaultEntries(fyo);
+  await createDefaultNumberSeries(fyo);
+  await updateInventorySettings(fyo);
+
+  if (fyo.isElectron) {
+    const { updatePrintTemplates } = await import('src/utils/printTemplates');
+    await updatePrintTemplates(fyo);
+  }
+
+  await completeSetup(companyName, fyo);
+  if (!Object.keys(fyo.currencySymbols).length) {
+    await setCurrencySymbols(fyo);
+  }
+
+  fyo.store.skipTelemetryLogging = false;
+}
+
+/////////////////////////////////////////////////////////////
+
+interface ChartAccount {
+  accountType?: string;
+  isGroup?: boolean;
+  rootType?: string;
+  [key: string]: any;
+}
+
+function convertAccountsToChart(accounts: Account[]): COATree {
+  const rootAccounts: ChartAccount = {};
+
+  // Helper function to get or create nested objects
+  function getOrCreateNestedObject(
+    obj: ChartAccount,
+    path: string[]
+  ): ChartAccount {
+    return path.reduce((acc, key) => {
+      if (!acc[key]) {
+        acc[key] = {};
+      }
+      return acc[key];
+    }, obj);
+  }
+
+  // First pass: create the structure
+  accounts.forEach((account) => {
+    const path = getAccountPath(accounts, account);
+    const parent = getOrCreateNestedObject(rootAccounts, path.slice(0, -1));
+    parent[account.name] = {
+      ...(account.accountType && { accountType: account.accountType }),
+      ...(account.isGroup && { isGroup: account.isGroup }),
+      ...(account.rootType && { rootType: account.rootType }),
+    };
+  });
+
+  // Second pass: remove empty objects and add rootType to top-level accounts
+  Object.keys(rootAccounts).forEach((key) => {
+    if (Object.keys(rootAccounts[key]).length === 0) {
+      delete rootAccounts[key];
+    } else {
+      const rootAccount = accounts.find(
+        (a) => a.name === key && !a.parentAccountId
+      );
+      if (rootAccount && rootAccount.rootType) {
+        rootAccounts[key].rootType = rootAccount.rootType;
+      }
+    }
+  });
+
+  return rootAccounts;
+}
+
+function getAccountPath(accounts: Account[], account: Account): string[] {
+  const path: string[] = [account.name];
+  let currentAccount = account;
+
+  while (currentAccount.parentAccountId) {
+    const parentAccount = accounts.find(
+      (a) => a.id === currentAccount.parentAccountId
+    );
+    if (!parentAccount) break;
+    path.unshift(parentAccount.name);
+    currentAccount = parentAccount;
+  }
+
+  return path;
+}
+
+///////////////////////////////////////////////////////////////
 
 async function createDefaultEntries(fyo: Fyo) {
   /**
@@ -174,14 +294,21 @@ async function createCurrencyRecords(fyo: Fyo) {
   return Promise.all(promises);
 }
 
-async function createAccountRecords(
-  bankName: string,
-  country: string,
-  chartOfAccounts: string,
-  fyo: Fyo
-) {
+async function createAccountRecords({
+  bankName,
+  country,
+  chartOfAccounts,
+  charts,
+  fyo,
+}: {
+  bankName: string;
+  country: string;
+  chartOfAccounts: string;
+  charts?: COATree;
+  fyo: Fyo;
+}) {
   const createCOA = new CreateCOA(chartOfAccounts, fyo);
-  await createCOA.run();
+  await createCOA.run(charts);
   const parentAccount = await getBankAccountParentName(country, fyo);
   const bankAccountDoc = {
     name: bankName,

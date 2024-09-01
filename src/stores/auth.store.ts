@@ -10,13 +10,13 @@ import { ref } from 'vue';
 export const useAuth = defineStore('auth-store', () => {
   const isAuthenticated = ref(false);
 
-  const init = () => {
-    const isAuth = checkHasAuthToken();
+  const init = async () => {
+    const isAuth = await checkHasAuthToken();
     isAuthenticated.value = isAuth;
   };
 
-  const authorize = (token: string) => {
-    setAuthToken(token);
+  const authorize = (access_token: string, refresh_token = '') => {
+    setAuthToken(access_token, refresh_token);
     isAuthenticated.value = true;
   };
 

@@ -144,6 +144,20 @@ const ipc = {
     await ipcRenderer.invoke(IPC_ACTIONS.SEND_ERROR, body);
   },
 
+  // ****************************************************************************
+
+  async getCookie(name: string) {
+    return await ipcRenderer.invoke(IPC_ACTIONS.GET_COOKIE, name);
+  },
+  async setCookie(cookie: Omit<Electron.CookiesSetDetails, 'url'>) {
+    return await ipcRenderer.invoke(IPC_ACTIONS.SET_COOKIE, cookie);
+  },
+  async removeCookie(name: string) {
+    return await ipcRenderer.invoke(IPC_ACTIONS.REMOVE_COOKIE, name);
+  },
+
+  // ********************************************************************************
+
   registerMainProcessErrorListener(listener: IPCRendererListener) {
     ipcRenderer.on(IPC_CHANNELS.LOG_MAIN_PROCESS_ERROR, listener);
   },

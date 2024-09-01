@@ -35,6 +35,8 @@ export default () => {
         reports: path.resolve(__dirname, './reports'),
         dummy: path.resolve(__dirname, './dummy'),
         fixtures: path.resolve(__dirname, './fixtures'),
+        //
+        remote: path.resolve(__dirname, './remote'),
       },
     },
   });

@@ -2,7 +2,7 @@ import { AuthResponse, LoginUserInput } from 'src/types/auth';
 import { API_ENDPOINTS } from './endpoints';
 import { HttpClient } from './http-client';
 import { User } from 'src/types/user';
-import { Business, CreateBusinessPayload } from 'src/types/business';
+import { Account, Business, CreateBusinessPayload } from 'src/types/business';
 
 class Client {
   users = {
@@ -18,8 +18,14 @@ class Client {
     me: () => {
       return HttpClient.get<Business[]>(API_ENDPOINTS.BUSINESSES_ME);
     },
-    create: (input: CreateBusinessPayload) =>
-      HttpClient.post<{}>(API_ENDPOINTS.BUSINESSES, input),
+    create: (input: CreateBusinessPayload) => {
+      return HttpClient.post<{}>(API_ENDPOINTS.BUSINESSES, input);
+    },
+    accounts: (businessId: string) => {
+      return HttpClient.get<Account[]>(
+        API_ENDPOINTS.BUSINESS_ACCOUNTS + businessId
+      );
+    },
   };
 }
 

@@ -24,7 +24,9 @@
       "reports/*": ["reports/*"],
       "models/*": ["models/*"],
       "utils/*": ["utils/*"],
-      "dummy/*": ["dummy/*"]
+      "dummy/*": ["dummy/*"],
+      //
+      "remote/*": ["remote/*"]
     },
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
@@ -48,7 +50,9 @@
     "reports/**/*.ts",
     "utils/**/*.ts",
     "tests/**/*.ts",
-    "dummy/**/*.ts"
+    "dummy/**/*.ts",
+    //
+    "remote/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }
