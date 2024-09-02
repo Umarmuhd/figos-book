@@ -92,7 +92,9 @@
                 Remote
               </p>
             </div>
-            <button class="ms-auto p-2 hover:bg-gray-200 rounded-full w-8 h-8 text-gray-600 hover:text-gray-400"
+            <button v-if="!files.find((item) => {
+              return item.companyName.toLowerCase() === business.name.toLowerCase()
+            })" class="ms-auto p-2 hover:bg-gray-200 rounded-full w-8 h-8 text-gray-600 hover:text-gray-400"
               @click.stop="() =>
                 downloadDbLocally(business)
                 ">
@@ -373,6 +375,9 @@ export default defineComponent({
       // this.$emit('setup-complete', input);
 
       // this.creatingDemo = true;
+
+
+
       await setupLocalInstance(
         filePath,
         {
@@ -390,7 +395,7 @@ export default defineComponent({
       updateConfigFiles(fyo);
       await fyo.purgeCache();
       await this.setFiles();
-      this.fyo.telemetry.log(Verb.Created, 'dummy-instance');
+      this.fyo.telemetry.log(Verb.Created, 'local-instance');
       this.creatingDemo = false;
       this.$emit('file-selected', filePath);
 

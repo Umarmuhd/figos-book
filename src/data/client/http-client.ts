@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ConfigValue } from 'src/config';
-import { getAuthToken, removeAuthToken } from '../token.utils';
+import { getAuthToken, removeAuthToken, setAuthToken } from '../token.utils';
+import { AuthResponse } from 'src/types/auth';
 
 // TODO: Due to windows timeout was set to 15000
 export const Axios = axios.create({
@@ -20,7 +21,6 @@ Axios.interceptors.request.use(
     //   ...config.headers,
     //   Authorization: `Bearer ${token ? token : ''}`,
     // };
-    console.log('tokens', tokens);
     config.headers['Authorization'] = `Bearer ${
       tokens.access_token ? tokens.access_token : ''
     }`;
@@ -43,9 +43,14 @@ Axios.interceptors.response.use(
     }
     if (error.response && error.response.status === 401) {
       const tokens = getAuthToken();
-      await refreshToken(tokens.refresh_token ?? '').catch(() =>
-        removeAuthToken()
-      );
+      await refreshToken(tokens.refresh_token ?? '')
+        .catch(() => removeAuthToken())
+        .then((tokens) => {
+          if (!tokens) throw new Error('unable to refresh token');
+          console.log({ tokens });
+
+          setAuthToken(tokens.accessToken, tokens.refreshToken);
+        });
     }
     return Promise.reject(error);
   }
@@ -73,16 +78,14 @@ export class HttpClient {
   }
 }
 
-async function refreshToken(refreshToken: string) {
+async function refreshToken(token: string): Promise<AuthResponse['tokens']> {
   const res = await fetch(ConfigValue.API_URL + '/auth/refresh', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      refresh: refreshToken,
-    }),
+    headers: {
+      'Content-Type': 'application/json',
+      authorization: `Refresh ${token}`,
+    },
+    body: JSON.stringify({ refresh: refreshToken }),
   });
-  const data = await res.json();
-  console.log({ data });
-
-  return data.accessToken;
+  return await res.json();
 }
